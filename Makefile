@@ -34,4 +34,4 @@ clean: ## Clean project files
 	@find . -name '__pycache__' -exec rm -fr {} +
 	@find . -name '*.pyc' -exec rm -f {} +
 	@find . -name '*.pyo' -exec rm -f {} +
-	@rm -rf .pdm-build .ruff_cache .coverage .pdm-python
+	@rm -rf .pdm-build .ruff_cache .coverage .pdm-python dist

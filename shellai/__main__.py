@@ -44,7 +44,8 @@ def get_args():
         args.history_clear,
         args.record,
     ]
-    if not args.query_string and (input_data := read_stdin()):
+    input_data = read_stdin()
+    if not args.query_string and input_data:
         logging.debug("stdin detected")
         args.query_string = input_data.strip()
 
