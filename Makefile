@@ -1,4 +1,4 @@
-.PHONY: install-tools install install-dev unit-test help
+.PHONY: install-tools install install-dev unit-test help build-container
 
 PROJECT_DIR = $(shell pwd)
 
@@ -29,9 +29,15 @@ help: ## Show available make commands
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 	@echo ''
 
+requirements.txt: pyproject.toml pdm.lock ## Generate requirements.txt file containing hashes for all non-devel packages
+	pdm export --prod --format requirements --output requirements.txt
+
 clean: ## Clean project files
 	@echo 'Cleanup project specific files...'
 	@find . -name '__pycache__' -exec rm -fr {} +
 	@find . -name '*.pyc' -exec rm -f {} +
 	@find . -name '*.pyo' -exec rm -f {} +
 	@rm -rf .pdm-build .ruff_cache .coverage .pdm-python
+
+build-container: ## Build shellai container
+	@podman build --tag rhel-lightspeed/shellai:latest -f ./containerfiles/shellai.Containerfile .
