@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Small wrapper script to execute the container with just running `shellai [query_string]`
+
+podman run rhel-lightspeed/shellai:latest "$@"
