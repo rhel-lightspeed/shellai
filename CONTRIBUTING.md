@@ -3,7 +3,7 @@
 The following is a set of guidelines for contributing to ShellAI codebase, which are hosted in the [RHEL Lightspeed
 Organization](https://github.com/rhell-lightspeed) on GitHub. These are mostly guidelines, not rules.
 
-* [OpenShift Lightspeed Service](https://github.com/openshift/lightspeed-service)
+* [Road Core Service](https://github.com/road-core/service)
 
 ## What should I know before I get started?
 
@@ -60,9 +60,8 @@ make install
 ### Getting a backend to manage your queries
 
 ShellAI depends on a backend service to interact with LLM providers (such as OpenAI, IBM WatsonX, etc...). For that
-purpose, we strongly recommend setting up [OpenShift Lightspeed
-Service](https://github.com/openshift/lightspeed-service). After you have everything in orer, the next steps should work
-without extra configuration.
+purpose, we strongly recommend setting up [Road Core Service](https://github.com/road-core/service). After you have
+everything in orer, the next steps should work without extra configuration.
 
 ### Update config to your needs
 
