@@ -61,7 +61,7 @@ make install
 
 ShellAI depends on a backend service to interact with LLM providers (such as OpenAI, IBM WatsonX, etc...). For that
 purpose, we strongly recommend setting up [Road Core Service](https://github.com/road-core/service). After you have
-everything in orer, the next steps should work without extra configuration.
+everything in order, the next steps should work without extra configuration.
 
 ### Update config to your needs
 
