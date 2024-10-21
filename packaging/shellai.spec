@@ -17,7 +17,9 @@ BuildRequires:  python3-tomli
 %endif
 
 Requires:       python3-requests
-Requires:       python3-pyyaml
+%if 0%{?rhel} && 0%{?rhel} < 10
+Requires:  python3-tomli
+%endif
 
 %description
 A simple wrapper to interact with RAG
@@ -29,7 +31,6 @@ A simple wrapper to interact with RAG
 %py3_build
 
 %install
-# TODO(r0x0d): Create config file
 %py3_install
 
 %files
