@@ -1,15 +1,15 @@
 import json
 import logging
-import os
 import sys
 from collections import namedtuple
+from pathlib import Path
 
 if sys.version_info >= (3, 11):
     import tomllib
 else:
     import tomli as tomllib
 
-CONFIG_DEFAULT_PATH: str = "~/.config/shellai/config.toml"
+CONFIG_DEFAULT_PATH: Path = Path("~/.config/shellai/config.toml")
 
 # tomllib does not support writting files, so we will create our own.
 CONFIG_TEMPLATE = """
@@ -34,31 +34,37 @@ endpoint = "{endpoint}"
 
 
 class Output(namedtuple("Output", ["enforce_script", "file", "prompt_separator"])):
+    """This class represents the [output] section of our config.toml file."""
+
     __slots__ = ()
 
     def __new__(
         cls,
         enforce_script: bool = False,
-        file: str = "/tmp/shellai_output.txt",
+        file: Path = Path("/tmp/shellai_output.txt"),
         prompt_separator: str = "$",
     ):
         return super(Output, cls).__new__(cls, enforce_script, file, prompt_separator)
 
 
 class History(namedtuple("History", ["enabled", "file", "max_size"])):
+    """This class represents the [history] section of our config.toml file."""
+
     __slots__ = ()
 
     def __new__(
         cls,
         enabled: bool = True,
-        file: str = "/tmp/shellai_output.txt",
+        file: Path = Path("~/.local/share/shellai/shellai_history.json"),
         max_size: int = 100,
     ):
+        file = Path(file)
         return super(History, cls).__new__(cls, enabled, file, max_size)
 
 
 class Backend(namedtuple("Backend", ["endpoint"])):
-    endpoint: str = "http://0.0.0.0:8080/v1/query/"
+    """This class represents the [backend] section of our config.toml file."""
+
     __slots__ = ()
 
     def __new__(
@@ -69,45 +75,58 @@ class Backend(namedtuple("Backend", ["endpoint"])):
 
 
 class Config:
+    """Class that holds our configuration file representation.
+
+    .. note::
+        With this class, after being initialized, one can access their fields like:
+
+        >>> config = Config()
+        >>> config.output.enforce_script
+
+        The currently available top-level fields are:
+            * output = Match the `py:Output` class and their fields
+            * history = Match the `py:History` class and their fields
+            * backend = Match the `py:backend` class and their fields
+    """
+
     def __init__(self, output: dict, history: dict, backend: dict) -> None:
         self.output: Output = Output(**output)
         self.history: History = History(**history)
         self.backend: Backend = Backend(**backend)
 
 
-def _create_config_file(config_path: str) -> None:
+def _create_config_file(config_file: Path) -> None:
     """Create a new configuration file with default values."""
-    config_dir = os.path.dirname(config_path)
-    logging.info(f"Creating new config file at {config_path}")
-    os.makedirs(config_dir, mode=0o755, exist_ok=True)
+
+    logging.info(f"Creating new config file at {config_file.parent}")
+    config_file.parent.mkdir(mode=0o755, exist_ok=True)
     base_config = Config(Output()._asdict(), History()._asdict(), Backend()._asdict())
 
-    with open(config_path, mode="w") as handler:
-        mapping = {
-            "enforce_script": json.dumps(base_config.output.enforce_script),
-            "output_file": base_config.output.file,
-            "prompt_separator": base_config.output.prompt_separator,
-            "enabled": json.dumps(base_config.history.enabled),
-            "history_file": base_config.history.file,
-            "max_size": base_config.history.max_size,
-            "endpoint": base_config.backend.endpoint,
-        }
-        config_formatted = CONFIG_TEMPLATE.format_map(mapping)
-        handler.write(config_formatted)
+    mapping = {
+        "enforce_script": json.dumps(base_config.output.enforce_script),
+        "output_file": base_config.output.file,
+        "prompt_separator": base_config.output.prompt_separator,
+        "enabled": json.dumps(base_config.history.enabled),
+        "history_file": base_config.history.file,
+        "max_size": base_config.history.max_size,
+        "endpoint": base_config.backend.endpoint,
+    }
+    config_formatted = CONFIG_TEMPLATE.format_map(mapping)
+    config_file.write_text(config_formatted)
 
 
-def _read_config_file(config_path: str) -> Config:
+def _read_config_file(config_file: Path) -> Config:
     """Read configuration file."""
     config_dict = {}
     try:
-        with open(config_path, mode="rb") as handler:
-            config_dict = tomllib.load(handler)
+        data = config_file.read_text()
+        config_dict = tomllib.loads(data)
     except FileNotFoundError as ex:
         logging.error(ex)
 
-    # Normalize filepaths
-    config_dict["history"]["file"] = os.path.expanduser(config_dict["history"]["file"])
-    config_dict["output"]["file"] = os.path.expanduser(config_dict["output"]["file"])
+    # Convert the file paths to an instance of `Path` and normalize them.
+    config_dict["history"]["file"] = Path(config_dict["history"]["file"]).expanduser()
+    config_dict["output"]["file"] = Path(config_dict["output"]["file"]).expanduser()
 
     return Config(
         output=config_dict["output"],
@@ -116,17 +135,16 @@ def _read_config_file(config_path: str) -> Config:
     )
 
 
-def load_config_file(config_path: str) -> Config:
+def load_config_file(config_file: Path) -> Config:
     """Load configuration file for shellai.
 
     If the user specifies a path where no config file is located, we will create one with default values.
     """
-    config_file = os.path.expanduser(config_path)
-    # Handle case where the user initiates a config file in current dir.
-    if not os.path.dirname(config_file):
-        config_file = os.path.join(os.path.curdir, config_file)
+    # Handle a case where the user pass only the filename for us without a path to it.
+    if not config_file.is_dir():
+        config_file = config_file.joinpath(Path().cwd(), config_file)
 
-    if not os.path.exists(config_file):
+    if not config_file.exists():
         _create_config_file(config_file)
 
     return _read_config_file(config_file)
