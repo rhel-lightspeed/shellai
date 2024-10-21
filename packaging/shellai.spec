@@ -18,7 +18,7 @@ BuildRequires:  python3-tomli
 
 Requires:       python3-requests
 %if 0%{?rhel} && 0%{?rhel} < 10
-BuildRequires:  python3-tomli
+Requires:  python3-tomli
 %endif
 
 %description

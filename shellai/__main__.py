@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 
+from shellai import utils
 from shellai.config import (
     CONFIG_DEFAULT_PATH,
     load_config_file,
@@ -61,7 +62,8 @@ def get_args():
 def main():
     parser, args = get_args()
 
-    config = load_config_file(args.config)
+    config_file = utils.expand_user_path(args.config)
+    config = load_config_file(config_file)
 
     enforce_script_session = config.output.enforce_script
     output_file = config.output.enforce_script
