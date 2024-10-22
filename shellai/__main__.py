@@ -3,12 +3,17 @@ import logging
 import os
 import sys
 
+from shellai import utils
+from shellai.config import (
+    CONFIG_DEFAULT_PATH,
+    load_config_file,
+)
 from shellai.handlers import (
     handle_history_write,
     handle_query,
     handle_script_session,
 )
-from shellai.utils import read_stdin, read_yaml_config
+from shellai.utils import read_stdin
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,7 +37,7 @@ def get_args():
     )
     parser.add_argument(
         "--config",
-        default=os.getenv("SHELLAI_CONFIG", "config.yaml"),
+        default=CONFIG_DEFAULT_PATH,
         help="Path to the config file.",
     )
 
@@ -57,15 +62,11 @@ def get_args():
 def main():
     parser, args = get_args()
 
-    config = read_yaml_config(args.config)
-    if not config:
-        logging.warning(
-            "Config file not found. Script will continue with default values."
-        )
+    config_file = utils.expand_user_path(args.config)
+    config = load_config_file(config_file)
 
-    output_capture_conf = config.get("output_capture", {})
-    enforce_script_session = output_capture_conf.get("enforce_script", False)
-    output_file = output_capture_conf.get("output_file", "/tmp/shellai_output.txt")
+    enforce_script_session = config.output.enforce_script
+    output_file = config.output.enforce_script
 
     if enforce_script_session and (not args.record or not os.path.exists(output_file)):
         parser.error(
@@ -79,7 +80,7 @@ def main():
         exit(0)
     if args.history_clear:
         logging.info("Clearing history of conversation")
-        handle_history_write(config.get("history", {}), [], "")
+        handle_history_write(config, [], "")
     if args.query_string:
         handle_query(args.query_string, config)
 
